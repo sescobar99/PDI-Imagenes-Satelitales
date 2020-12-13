@@ -3,3 +3,8 @@
 00I_Landsat_8/
 00I_Sentinell2/
 00I_Landsat_8_NDVI/
+Data/SATELLITE_1/kmeans/
+
+Data/SATELLITE_1/thresholding/
+
+Data/SATELLITE_1/Lansat/
