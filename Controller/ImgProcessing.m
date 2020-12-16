@@ -1,6 +1,6 @@
 classdef ImgProcessing
     methods(Static)        
-        function processData(dataLoaderL,folderName)
+        function processData(dataLoaderL)
             %Metodo para procesar las imagenes, recibe un dataset, lo
             %recorre y obtiene cada imagen para procesarla.
             %folderName es el nombre de la carpeta en la que se va a guardar
@@ -8,6 +8,7 @@ classdef ImgProcessing
             
             %Se carga la carpeta en la que estan las imagenes
             datastore = dataLoaderL;
+            path = datastore.images.Data.imagePath;
             
 
             %Podemos ir leyendo y aplicandole el proceso a las imagenes una a una.
@@ -15,28 +16,31 @@ classdef ImgProcessing
                         
             %Creacion de csv para exportar datos
             csv = [];
-                        
+            folderName = split(path, '\');
+            folderName = folderName(3);
             for i =1:len
                 
                 node = datastore.getElement(i);%Lectura de la imagen
                 imgPath = node.Data.imagePath;
                 a = imread(imgPath); %Guardar imagen en a
+                imgName = split(imgPath, '\');
+                imgName = imgName(end);
                 
                 %Obtener nombre del archivo y guardarlo en fileName
-                fileName = 'name_name';
+                fileName = imgName;
                 fileName = cellstr(fileName); %Convertir string a cell para facilitar al guardar csv
                 str = split(fileName, '_');
                 
                 %Se obtiene la fecha y se convierte a formato AAAA-MM-DD
                 date = char(str(4));
-                date = insertAfter(date,4,'-');
-                date = insertAfter(date,7,'-');
+                date = ImgProcessing.insertAfter(date,4,'-');
+                date = ImgProcessing.insertAfter(date,7,'-');
                 
                 %-- Preprocesamiento de la imagen -------------------------                
                 %Se procesa la imagen y se retorna el numero de pixeles con vegetacion,
                 %la imagen con la mascara de threshold, la image del ROI(en modo
                 %interactivo es toda la imagen), y la imagen con la mascara del kmeans
-                [vegetationIndex, maskedRGBImage,RGB,maskedKImage] = rotateCropAndProcess(a, 0,0); %version interactiva solo recibe imagen
+                [vegetationIndex, maskedRGBImage,RGB,maskedKImage] = ImgProcessing.rotateCropAndProcess(a, 0, 0); %version interactiva solo recibe imagen
                 %----------------------------------------------------------------------                
                 %En la funcion rotateCropAndProcess se continua con el apartado 4
 
@@ -69,7 +73,7 @@ classdef ImgProcessing
             
         end
         
-        function [vegetationIndex, maskedRGBImage,RGB,maskedKImage] = rotateCropAndProcess(a)
+        function [vegetationIndex, maskedRGBImage,RGB,maskedKImage] = rotateCropAndProcess(a, batchMode, landsat)
             %Esta funcion rota*, corta* y llama a create mask para que
             %procese la imagen
             %*si modo batch = 1
@@ -103,7 +107,7 @@ classdef ImgProcessing
             %--------------------------------------------------------------
             %--4. Procesamiento de la imagen ------------------------------
             %--------------------------------------------------------------
-            [~,maskedRGBImage,RGB,maskedKImage, ~,vegetationIndex, ~, ~, ~, ~, ~] = createMaskV2(b);
+            [~,maskedRGBImage,RGB,maskedKImage, ~,vegetationIndex, ~, ~, ~, ~, ~] = ImgProcessing.createMaskV2(b);
             % [BW,maskedRGBImage,RGB,maskedKImage, maskedFinalImage,vegetationIndex, n, b, k3c1, k3c2, k3c3] = createMaskV2(b);
             %--------------------------------------------------------------
             %--------------------------------------------------------------
@@ -173,7 +177,7 @@ classdef ImgProcessing
             k3c3 = RGB .* uint8(mask3);
 
             %Choose the greenest k-label
-            [i, n, b] = greenest(k3c1,k3c2,k3c3);
+            [i, n, b] = ImgProcessing.greenest(k3c1,k3c2,k3c3);
             switch i
                 case 1
                     maskedKImage = k3c1;
