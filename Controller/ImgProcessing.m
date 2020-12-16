@@ -32,9 +32,10 @@ classdef ImgProcessing
                 str = split(fileName, '_');
                 
                 %Se obtiene la fecha y se convierte a formato AAAA-MM-DD
-                date = char(str(4));
-                date = ImgProcessing.insertAfter(date,4,'-');
-                date = ImgProcessing.insertAfter(date,7,'-');
+                %(deprecated)
+%                 date = char(str(4));
+%                 date = ImgProcessing.insertAfter(date,4,'-');
+%                 date = ImgProcessing.insertAfter(date,7,'-');
                 
                 %-- Preprocesamiento de la imagen -------------------------                
                 %Se procesa la imagen y se retorna el numero de pixeles con vegetacion,

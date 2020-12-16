@@ -39,16 +39,20 @@ for i =1:len
     
     %Se obtiene el nuombre del archivo para guardar las imagenes y generar el csv
     fileName = split(info.Filename, filesep);
+    
+    imgPath = fileName(end-3:end);
+    imgPath = strcat('.',filesep,imgPath(1),filesep,imgPath(2),filesep,imgPath(3),filesep,imgPath(4));
+    
     fileName = fileName(end);
     str = split(fileName, '_');
     
     %obtener version del sensor
     ls_v = char(str(1));
     ls_v = ls_v(end);
-    %Se obtiene la fecha y se convierte a formato AAAA-MM-DD
-    date = char(str(4));
-    date = insertAfter(date,4,'-');
-    date = insertAfter(date,7,'-');
+    %Se obtiene la fecha y se convierte a formato AAAA-MM-DD (deprecated)
+    %     date = char(str(4));
+    %     date = insertAfter(date,4,'-');
+    %     date = insertAfter(date,7,'-');
     
     %----------------------------------------------------------------------
     %--3. Preprocesamiento de la imagen -----------------------------------
@@ -65,18 +69,17 @@ for i =1:len
     %--5. Persistencia de los datos ---------------------------------------
     %----------------------------------------------------------------------
     %Se forma string que sera guardado en csv
-    record = [date, fileName, vegetationIndex];
+    record = [cellstr(imgPath), vegetationIndex];
     csv = [csv; record];
-    
     
     fileName = char(fileName);
     %Se guardan las dos imagenes con las mascaras (kmeans, threshold)
     %FILENAME = ['../Data/SATELLITE_1/kmeans/' char(fileName)];
-    FILENAME = ['..' filesep 'Data' filesep folderName filesep 'kmeans' filesep fileName];
+    FILENAME = strcat('..', filesep, 'Data', filesep, folderName, filesep, 'kmeans', filesep, fileName);
     imwrite(maskedKImage,FILENAME);
                 
     %FILENAME = ['../Data/SATELLITE_1/thresholding/' char(fileName)];
-    FILENAME = ['..' filesep 'Data' filesep folderName filesep 'thresholding' filesep fileName];          
+    FILENAME = strcat('..', filesep, 'Data', filesep, folderName, filesep, 'thresholding', filesep, fileName);          
     imwrite(maskedRGBImage,FILENAME);
     
     %Imprimir el numero actual de la iteracion
@@ -85,7 +88,7 @@ end
 
 %Guardar csv
 %writecell(csv,'../Data/SATELLITE_1/data.txt');
-writecell(csv,['..' filesep 'Data' filesep folderName filesep 'data.txt']);
+writecell(csv,strcat('..', filesep, 'Data', filesep, folderName, filesep, 'data.csv'));
           
 
 
