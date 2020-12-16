@@ -48,16 +48,16 @@ classdef ImgProcessing
                 %--5. Persistencia de los datos ---------------------------------------
                 %----------------------------------------------------------------------
                 %Se forma string que sera guardado en csv
-                record = [date, fileName, vegetationIndex];
+                record = [cellstr(imgPath), vegetationIndex];
                 csv = [csv; record];
 
 
                 fileName = char(fileName);
                 %Se guardan las dos imagenes con las mascaras (kmeans, threshold)
-                FILENAME = ['..' filesep 'Data' filesep folderName filesep 'kmeans' filesep fileName];
+                FILENAME = strcat('.', filesep, 'Data', filesep, folderName, filesep, 'kmeans', filesep, fileName);
                 imwrite(maskedKImage,FILENAME);
 
-                FILENAME = ['..' filesep 'Data' filesep folderName filesep 'thresholding' filesep fileName];          
+                FILENAME = strcat('.', filesep, 'Data', filesep, folderName, filesep, 'thresholding', filesep, fileName);          
                 imwrite(maskedRGBImage,FILENAME);
 
                 %Imprimir el numero actual de la iteracion
@@ -65,7 +65,7 @@ classdef ImgProcessing
                 
             end
             %guardar csv
-            writecell(csv,['..' filesep 'Data' filesep folderName filesep 'data.txt']);
+            writecell(csv,strcat('.', filesep, 'Data', filesep, folderName, filesep,'data.csv'));
             
             %--------------------------------------------------------------
             %----------------- FIN DEL PROGRAMA PRINCIPAL -----------------
