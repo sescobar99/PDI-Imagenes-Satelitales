@@ -1,72 +1,131 @@
 classdef ImgProcessing
     methods(Static)        
-        function void = processData(dataLoaderL,folderName)
+        function processData(dataLoaderL,folderName)
             %Metodo para procesar las imagenes, recibe un dataset, lo
             %recorre y obtiene cada imagen para procesarla.
             %folderName es el nombre de la carpeta en la que se va a guardar
             %la informacion e.g. 'SATELLITE_1'
             
-            %Se carga la carpeta en la que estan las imagenes como un DataSet
+            %Se carga la carpeta en la que estan las imagenes
             datastore = dataLoaderL;
+            
 
             %Podemos ir leyendo y aplicandole el proceso a las imagenes una a una.
-            %len = dataLoaderL.size;
             len = datastore.size;
-            
+                        
             %Creacion de csv para exportar datos
             csv = [];
-
+                        
             for i =1:len
-                node = datastore.getElement(i);
-                imgPath = node.Data.imagePath;
-                a = imread(imgPath);
-
-                [vegetationIndex, maskedRGBImage,~,maskedKImage] = rotateCropAndProcess(a);
                 
-                fileName = split(info.Filename, filesep);
-                fileName = fileName(end);    
+                node = datastore.getElement(i);%Lectura de la imagen
+                imgPath = node.Data.imagePath;
+                a = imread(imgPath); %Guardar imagen en a
+                
+                %Obtener nombre del archivo y guardarlo en fileName
+                fileName = 'name_name';
+                fileName = cellstr(fileName); %Convertir string a cell para facilitar al guardar csv
                 str = split(fileName, '_');
+                
+                %Se obtiene la fecha y se convierte a formato AAAA-MM-DD
                 date = char(str(4));
                 date = insertAfter(date,4,'-');
                 date = insertAfter(date,7,'-');
-                record = [date fileName vegetationIndex];
-                csv = [csv; record];
                 
-                %Dependiendo de como este implementado quitar el char()
-                FILENAME = ['..' filesep 'Data' filesep folderName filesep 'kmeans' filesep char(fileName)];
+                %-- Preprocesamiento de la imagen -------------------------                
+                %Se procesa la imagen y se retorna el numero de pixeles con vegetacion,
+                %la imagen con la mascara de threshold, la image del ROI(en modo
+                %interactivo es toda la imagen), y la imagen con la mascara del kmeans
+                [vegetationIndex, maskedRGBImage,RGB,maskedKImage] = rotateCropAndProcess(a, 0,0); %version interactiva solo recibe imagen
+                %----------------------------------------------------------------------                
+                %En la funcion rotateCropAndProcess se continua con el apartado 4
+
+                %----------------------------------------------------------------------
+                %--5. Persistencia de los datos ---------------------------------------
+                %----------------------------------------------------------------------
+                %Se forma string que sera guardado en csv
+                record = [date, fileName, vegetationIndex];
+                csv = [csv; record];
+
+
+                fileName = char(fileName);
+                %Se guardan las dos imagenes con las mascaras (kmeans, threshold)
+                FILENAME = ['..' filesep 'Data' filesep folderName filesep 'kmeans' filesep fileName];
                 imwrite(maskedKImage,FILENAME);
 
-                FILENAME = ['..' filesep 'Data' filesep folderName filesep 'thresholding' filesep char(fileName)];          
+                FILENAME = ['..' filesep 'Data' filesep folderName filesep 'thresholding' filesep fileName];          
                 imwrite(maskedRGBImage,FILENAME);
+
+                %Imprimir el numero actual de la iteracion
+                disp(i)
+                
             end
+            %guardar csv
             writecell(csv,['..' filesep 'Data' filesep folderName filesep 'data.txt']);
+            
+            %--------------------------------------------------------------
+            %----------------- FIN DEL PROGRAMA PRINCIPAL -----------------
+            %--------------------------------------------------------------           
+            
         end
         
         function [vegetationIndex, maskedRGBImage,RGB,maskedKImage] = rotateCropAndProcess(a)
-            %Esta funcion rota, corta, y llama a create mask para que
+            %Esta funcion rota*, corta* y llama a create mask para que
             %procese la imagen
+            %*si modo batch = 1
             %Retorna: El numero de pixeles de vegetacion(OR entre mascara
             %verde de K-means y mascara de threshold) en vegetationIndex,
             %la imagen con la mascara del treshlod aplicaeda en
             %maskedRGBIMage. La ROI en RGB. La imagen con la mascara verde
             %de k-mena aplicada en maskedKImage
             
-            b = imrotate(a,12, 'crop');
-            auxR = 1.0e+03*[2.8, 4, 5.9-2.8, 7.1-4];
-            b = imcrop(b,auxR);
+            
+            b = a;
+            
+            %--------------------------------------------------------------
+            %--3. Preprocesamiento de la imagen ---------------------------
+            %--------------------------------------------------------------
+            %Seleecion de modo batch. En el modo batch se rotan las imagenes y se
+            %recorta el area de interes ya que son valores hallados experimentalmente
+            %para landsat 4,5 y 8
+            if(batchMode == 1)
+                if(landsat == 8)
+                    degree = 12;
+                    auxC = 1.0e+03*[2.8, 4, 5.9-2.8, 7.1-4];
+                else
+                    degree = 8;
+                    auxC= 1e3 * [2.7 3.6 6-2.7 6.5-3.6];
+                end
+                b = imrotate(a,degree, 'crop'); %rotacion
+                b = imcrop(b,auxC); %recorte
+            end
+
+            %--------------------------------------------------------------
+            %--4. Procesamiento de la imagen ------------------------------
+            %--------------------------------------------------------------
             [~,maskedRGBImage,RGB,maskedKImage, ~,vegetationIndex, ~, ~, ~, ~, ~] = createMaskV2(b);
-
+            % [BW,maskedRGBImage,RGB,maskedKImage, maskedFinalImage,vegetationIndex, n, b, k3c1, k3c2, k3c3] = createMaskV2(b);
+            %--------------------------------------------------------------
+            %--------------------------------------------------------------
+            %--------------------------------------------------------------
         end
-
+        
         function [BW,maskedRGBImage,RGB, maskedKImage,maskedFinalImage,greenPN, n, b,k3c1,k3c2,k3c3] = createMaskV2(RGB)
-            %Funcion que 
-            %  [BW,MASKEDRGBIMAGE] = createMask(RGB) thresholds image RGB using
-            %  auto-generated code from the colorThresholder app. The colorspace and
-            %  range for each channel of the colorspace were set within the app. The
-            %  segmentation mask is returned in BW, and a composite of the mask and
-            %  original RGB images is returned in maskedRGBImage.
-
-            % Auto-generated by colorThresholder app on 17-Nov-2020
+            %--------------------------------------------------------------------------
+            %--4. Procesamiento de la imagen ------------------------------------------
+            %--------------------------------------------------------------------------
+            %Funcion que realiza el procesado de la imagen. Recibe una imagen en RGB y
+            % la convierte a Lab para obtener la mascara con unos valores predefinidos,
+            % adicionalmente utiliza los canales a* y b* para aplicar K-means(k=3).
+            %   Retorna: 
+            %   La mascara de threshold en BW. 
+            %   Imagen con la mascara de threashold aplicada en maskedRGBImage.
+            %   Imagen original ingresada en RGB.
+            %   La imagen con la mascar verde de kmeans aplicada en maskedkImage.
+            %   La imagen con la mascara OR aplicada en maskedFinalImage.
+            %   El conteo de pixeles de maskedFinalImage en greenPN
+            %   Arrays n y b para debug del metodo de seleccionar mascara de kmeans verde
+            %   k3c1, k3c2, k3c3. Imagenes con las mascaras aplicadas de kmeans
             %------------------------------------------------------
         
 
@@ -139,9 +198,13 @@ classdef ImgProcessing
         end
         
         function [i, n, b] = greenest(k3c1,k3c2,k3c3)
-            %Retorna el indicde de la imagen con mayor cantidad dde verde 
-            %de las ingresadas
-            %n y b para debuig
+            %Returns the greenest among 3 RGB  images.
+            %  [i, n, b] = greenest(k3c1,k3c2,k3c3) Compares 3 RGB images returns the
+            %  index of the greenest one in i, uses lab color space and predefined
+            %  thresholds values for comparison. Sums the number of pixels of the mask
+            %  Second threshold is to not take into acconunt the green clouds. Returns
+            %  sum of green pixels and green clouds in n and b (3x1 arrays) for debug
+            %  purposes
                         
             %Threshold para vegetacion
             channel1Min = 46.585;

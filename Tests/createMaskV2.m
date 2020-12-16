@@ -1,17 +1,19 @@
 function [BW,maskedRGBImage,RGB, maskedKImage,maskedFinalImage,greenPN, n, b,k3c1,k3c2,k3c3] = createMaskV2(RGB)
-% Funcion que realiza el procesado de la imagen. Recibe una imagen en RGB y
+%--------------------------------------------------------------------------
+%--4. Procesamiento de la imagen ------------------------------------------
+%--------------------------------------------------------------------------
+%Funcion que realiza el procesado de la imagen. Recibe una imagen en RGB y
 % la convierte a Lab para obtener la mascara con unos valores predefinidos,
 % adicionalmente utiliza los canales a* y b* para aplicar K-means(k=3).
-%Retorna: 
-%La mascara de threshold en BW. 
-%Imagen con la mascara de threashold aplicada en maskedRGBImage.
-%Imagen original ingresada en RGB.
-%La imagen con la mascar verde de kmeans aplicada en maskedkImage.
-%La imagen con la mascara OR aplicada en maskedFinalImage.
-%El conteo de pixeles de maskedFinalImage en greenPN
-%Arrays n y b para debug del metodo de seleccionar mascara de kmeans verde
-%k3c1, k3c2, k3c3. Imagenes con las mascaras aplicadas del proceso de
-%kmenas
+%   Retorna: 
+%   La mascara de threshold en BW. 
+%   Imagen con la mascara de threashold aplicada en maskedRGBImage.
+%   Imagen original ingresada en RGB.
+%   La imagen con la mascar verde de kmeans aplicada en maskedkImage.
+%   La imagen con la mascara OR aplicada en maskedFinalImage.
+%   El conteo de pixeles de maskedFinalImage en greenPN
+%   Arrays n y b para debug del metodo de seleccionar mascara de kmeans verde
+%   k3c1, k3c2, k3c3. Imagenes con las mascaras aplicadas de kmeans
 %------------------------------------------------------
 
 % Convert RGB image to chosen color space
